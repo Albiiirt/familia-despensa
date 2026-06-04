@@ -16,6 +16,10 @@ create table if not exists items (
 -- Enable realtime
 alter publication supabase_realtime add table items;
 
--- Allow public read/write (family use, no auth required)
+-- Only authenticated family members can access the data
 alter table items enable row level security;
-create policy "allow_all" on items for all using (true) with check (true);
+drop policy if exists "allow_all" on items;
+create policy "authenticated_only" on items
+  for all
+  using (auth.role() = 'authenticated')
+  with check (auth.role() = 'authenticated');

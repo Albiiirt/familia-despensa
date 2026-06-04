@@ -1,12 +1,15 @@
 import { useState, useMemo } from 'react';
-import { ShoppingCart, Package, AlertCircle } from 'lucide-react';
+import { ShoppingCart, Package, AlertCircle, LogOut, Loader2 } from 'lucide-react';
 import type { TabId } from './types';
 import { useStore } from './hooks/useStore';
+import { useAuth } from './hooks/useAuth';
 import { InventoryTab } from './components/InventoryTab';
 import { ShoppingTab } from './components/ShoppingTab';
+import { LoginScreen } from './components/LoginScreen';
 import { needsShopping } from './lib/utils';
 
 export default function App() {
+  const { session, loading: authLoading, signIn, signUp, signOut } = useAuth();
   const [tab, setTab] = useState<TabId>('despensa');
   const store = useStore();
 
@@ -19,6 +22,18 @@ export default function App() {
     () => store.items.filter(needsShopping).length,
     [store.items]
   );
+
+  if (authLoading) {
+    return (
+      <div className="min-h-svh flex items-center justify-center bg-slate-50">
+        <Loader2 size={32} className="animate-spin text-emerald-500" />
+      </div>
+    );
+  }
+
+  if (!session) {
+    return <LoginScreen onSignIn={signIn} onSignUp={signUp} />;
+  }
 
   return (
     <div className="flex flex-col h-svh max-w-[480px] mx-auto bg-slate-50">
@@ -34,12 +49,21 @@ export default function App() {
               <p className="text-[10px] text-slate-400 leading-none">{store.items.length} productos</p>
             </div>
           </div>
-          {alertCount > 0 && (
-            <div className="flex items-center gap-1.5 bg-amber-50 text-amber-600 px-3 py-1.5 rounded-full border border-amber-200">
-              <AlertCircle size={13} strokeWidth={2} />
-              <span className="text-xs font-semibold">{alertCount} escasean</span>
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            {alertCount > 0 && (
+              <div className="flex items-center gap-1.5 bg-amber-50 text-amber-600 px-3 py-1.5 rounded-full border border-amber-200">
+                <AlertCircle size={13} strokeWidth={2} />
+                <span className="text-xs font-semibold">{alertCount} escasean</span>
+              </div>
+            )}
+            <button
+              onClick={signOut}
+              className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-600 transition"
+              title="Cerrar sesión"
+            >
+              <LogOut size={17} strokeWidth={2} />
+            </button>
+          </div>
         </div>
       </header>
 
