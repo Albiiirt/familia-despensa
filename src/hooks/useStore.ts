@@ -1,36 +1,38 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Item, ShoppingEntry, Category, Unit } from '../types';
 import { generateId, now, needsShopping, getStatus } from '../lib/utils';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
-const LS_ITEMS = 'despensa_items';
+const LS_ITEMS    = 'despensa_items';
 const LS_SHOPPING = 'despensa_shopping';
 
 function loadLS<T>(key: string, fallback: T): T {
   try {
     const raw = localStorage.getItem(key);
     return raw ? JSON.parse(raw) : fallback;
-  } catch {
-    return fallback;
-  }
+  } catch { return fallback; }
 }
-
 function saveLS<T>(key: string, value: T) {
   localStorage.setItem(key, JSON.stringify(value));
 }
 
 export function useStore() {
   const [items, setItems] = useState<Item[]>(() => loadLS(LS_ITEMS, []));
-  const [manualShopping, setManualShopping] = useState<ShoppingEntry[]>(() =>
-    loadLS<ShoppingEntry[]>(LS_SHOPPING, []).filter(e => e.is_manual)
+
+  // Shopping list fully synced via Supabase; fallback to localStorage
+  const [dbShopping, setDbShopping] = useState<ShoppingEntry[]>(() =>
+    isSupabaseConfigured ? [] : loadLS<ShoppingEntry[]>(LS_SHOPPING, [])
   );
+
   const [loading, setLoading] = useState(false);
 
-  // Persist to localStorage on change
-  useEffect(() => { saveLS(LS_ITEMS, items); }, [items]);
-  useEffect(() => { saveLS(LS_SHOPPING, manualShopping); }, [manualShopping]);
+  // Stable refs so callbacks always see latest data
+  const itemsRef      = useRef(items);
+  const dbShoppingRef = useRef(dbShopping);
+  useEffect(() => { itemsRef.current = items; }, [items]);
+  useEffect(() => { dbShoppingRef.current = dbShopping; }, [dbShopping]);
 
-  // Sync with Supabase if configured
+  // ---------- Supabase sync: items ----------
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase) return;
     setLoading(true);
@@ -38,19 +40,39 @@ export function useStore() {
       if (data) setItems(data as Item[]);
       setLoading(false);
     });
-    const channel = supabase.channel('items').on(
+    const ch = supabase.channel('items').on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'items' },
-      () => {
-        supabase!.from('items').select('*').order('name').then(({ data }) => {
-          if (data) setItems(data as Item[]);
-        });
-      }
+      () => supabase!.from('items').select('*').order('name').then(({ data }) => {
+        if (data) setItems(data as Item[]);
+      })
     ).subscribe();
-    return () => { supabase!.removeChannel(channel); };
+    return () => { supabase!.removeChannel(ch); };
   }, []);
 
-  // --- Items CRUD ---
+  // ---------- Supabase sync: shopping_list ----------
+  useEffect(() => {
+    if (!isSupabaseConfigured || !supabase) return;
+    supabase.from('shopping_list').select('*').order('created_at').then(({ data }) => {
+      if (data) setDbShopping(data as ShoppingEntry[]);
+    });
+    const ch = supabase.channel('shopping_list').on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'shopping_list' },
+      () => supabase!.from('shopping_list').select('*').order('created_at').then(({ data }) => {
+        if (data) setDbShopping(data as ShoppingEntry[]);
+      })
+    ).subscribe();
+    return () => { supabase!.removeChannel(ch); };
+  }, []);
+
+  // Persist to localStorage when Supabase not configured
+  useEffect(() => { saveLS(LS_ITEMS, items); }, [items]);
+  useEffect(() => {
+    if (!isSupabaseConfigured) saveLS(LS_SHOPPING, dbShopping);
+  }, [dbShopping]);
+
+  // ---------- Items CRUD ----------
 
   const addItem = useCallback(async (data: {
     name: string; category: Category; unit: Unit;
@@ -62,7 +84,8 @@ export function useStore() {
     };
     if (isSupabaseConfigured && supabase) {
       const { data: row } = await supabase.from('items').insert(item).select().single();
-      if (row) { setItems(prev => [...prev, row as Item].sort((a, b) => a.name.localeCompare(b.name))); return; }
+      if (row) setItems(prev => [...prev, row as Item].sort((a, b) => a.name.localeCompare(b.name)));
+      return;
     }
     setItems(prev => [...prev, item].sort((a, b) => a.name.localeCompare(b.name)));
   }, []);
@@ -78,85 +101,123 @@ export function useStore() {
   const deleteItem = useCallback(async (id: string) => {
     if (isSupabaseConfigured && supabase) {
       await supabase.from('items').delete().eq('id', id);
+      await supabase.from('shopping_list').delete().eq('id', `auto_${id}`);
     }
     setItems(prev => prev.filter(i => i.id !== id));
-    setManualShopping(prev => prev.filter(e => e.item_id !== id));
+    setDbShopping(prev => prev.filter(e => e.id !== `auto_${id}` && e.item_id !== id));
   }, []);
 
   const toggleFavorite = useCallback((id: string) => {
-    const item = items.find(i => i.id === id);
+    const item = itemsRef.current.find(i => i.id === id);
     if (!item) return;
     updateItem(id, { is_favorite: !item.is_favorite });
-  }, [items, updateItem]);
+  }, [updateItem]);
 
   const toggleHidden = useCallback((id: string) => {
-    const item = items.find(i => i.id === id);
+    const item = itemsRef.current.find(i => i.id === id);
     if (!item) return;
     updateItem(id, { is_hidden: !item.is_hidden });
-  }, [items, updateItem]);
+  }, [updateItem]);
 
   const adjustQuantity = useCallback((id: string, delta: number) => {
-    const item = items.find(i => i.id === id);
+    const item = itemsRef.current.find(i => i.id === id);
     if (!item) return;
     const qty = Math.max(0, Number((item.quantity + delta).toFixed(3)));
     updateItem(id, { quantity: qty });
-  }, [items, updateItem]);
+  }, [updateItem]);
 
-  // --- Shopping list ---
+  // ---------- Shopping list ----------
 
-  // Auto entries from inventory
+  // Auto entries derived from inventory
   const autoShopping: ShoppingEntry[] = items
-    .filter(needsShopping)
-    .map(item => ({
-      id: `auto_${item.id}`,
-      item_id: item.id,
-      name: item.name,
-      category: item.category,
-      unit: item.unit,
-      quantity_needed: Math.max(0, item.min_quantity - item.quantity),
-      is_checked: false,
-      is_manual: false,
-    }));
+    .filter(i => !(i.is_hidden ?? false) && needsShopping(i))
+    .map(item => {
+      const autoId = `auto_${item.id}`;
+      const dbEntry = dbShopping.find(e => e.id === autoId);
+      return {
+        id: autoId,
+        item_id: item.id,
+        name: item.name,
+        category: item.category,
+        unit: item.unit,
+        quantity_needed: Math.max(0, item.min_quantity - item.quantity),
+        is_checked: dbEntry?.is_checked ?? false,
+        is_manual: false,
+      };
+    });
 
-  const shoppingList: ShoppingEntry[] = [
-    ...autoShopping,
-    ...manualShopping,
-  ];
+  const manualShopping = dbShopping.filter(e => e.is_manual);
+  const shoppingList: ShoppingEntry[] = [...autoShopping, ...manualShopping];
 
-  // checkedAuto declared BEFORE any callback that uses it
-  const [checkedAuto, setCheckedAuto] = useState<Set<string>>(new Set());
-
-  const addManualShoppingItem = useCallback((data: {
+  const addManualShoppingItem = useCallback(async (data: {
     name: string; category: Category; unit: string; quantity_needed: number; notes?: string;
   }) => {
-    const entry: ShoppingEntry = {
-      id: generateId(), is_manual: true, is_checked: false, ...data,
-    };
-    setManualShopping(prev => [...prev, entry]);
+    const entry: ShoppingEntry = { id: generateId(), is_manual: true, is_checked: false, ...data };
+    if (isSupabaseConfigured && supabase) {
+      await supabase.from('shopping_list').insert(entry);
+      return; // realtime will update state
+    }
+    setDbShopping(prev => [...prev, entry]);
   }, []);
 
-  const toggleShoppingCheck = useCallback((id: string) => {
-    setManualShopping(prev => prev.map(e => e.id === id ? { ...e, is_checked: !e.is_checked } : e));
-    setCheckedAuto(prev => {
-      const s = new Set(prev);
-      s.has(id) ? s.delete(id) : s.add(id);
-      return s;
-    });
+  const toggleShoppingCheck = useCallback(async (id: string) => {
+    const isAuto = id.startsWith('auto_');
+    const db = dbShoppingRef.current;
+
+    if (isAuto) {
+      const itemId = id.replace('auto_', '');
+      const srcItem = itemsRef.current.find(i => i.id === itemId);
+      if (!srcItem) return;
+      const existing = db.find(e => e.id === id);
+      const newChecked = !(existing?.is_checked ?? false);
+      const entry: ShoppingEntry = {
+        id,
+        item_id: itemId,
+        name: srcItem.name,
+        category: srcItem.category,
+        unit: srcItem.unit,
+        quantity_needed: Math.max(0, srcItem.min_quantity - srcItem.quantity),
+        is_checked: newChecked,
+        is_manual: false,
+      };
+      if (isSupabaseConfigured && supabase) {
+        await supabase.from('shopping_list').upsert(entry);
+        return;
+      }
+      setDbShopping(prev =>
+        existing
+          ? prev.map(e => e.id === id ? { ...e, is_checked: newChecked } : e)
+          : [...prev, entry]
+      );
+    } else {
+      const existing = db.find(e => e.id === id);
+      if (!existing) return;
+      const newChecked = !existing.is_checked;
+      if (isSupabaseConfigured && supabase) {
+        await supabase.from('shopping_list').update({ is_checked: newChecked }).eq('id', id);
+        return;
+      }
+      setDbShopping(prev => prev.map(e => e.id === id ? { ...e, is_checked: newChecked } : e));
+    }
   }, []);
 
-  const deleteShoppingItem = useCallback((id: string) => {
-    setManualShopping(prev => prev.filter(e => e.id !== id));
+  const deleteShoppingItem = useCallback(async (id: string) => {
+    if (isSupabaseConfigured && supabase) {
+      await supabase.from('shopping_list').delete().eq('id', id);
+      return;
+    }
+    setDbShopping(prev => prev.filter(e => e.id !== id));
   }, []);
 
-  const clearCheckedShopping = useCallback(() => {
-    setManualShopping(prev => prev.filter(e => !e.is_checked));
-    setCheckedAuto(new Set());
-  }, []);
-
-  // Merge checked state into shopping list
-  const shoppingListWithChecked = shoppingList.map(e =>
-    e.is_manual ? e : { ...e, is_checked: checkedAuto.has(e.id) }
-  );
+  const clearCheckedShopping = useCallback(async () => {
+    const checkedIds = shoppingList.filter(e => e.is_checked).map(e => e.id);
+    if (!checkedIds.length) return;
+    if (isSupabaseConfigured && supabase) {
+      await supabase.from('shopping_list').delete().in('id', checkedIds);
+      return;
+    }
+    setDbShopping(prev => prev.filter(e => !e.is_checked));
+  }, [shoppingList]);
 
   return {
     items,
@@ -167,7 +228,7 @@ export function useStore() {
     toggleFavorite,
     toggleHidden,
     adjustQuantity,
-    shoppingList: shoppingListWithChecked,
+    shoppingList,
     addManualShoppingItem,
     toggleShoppingCheck,
     deleteShoppingItem,
