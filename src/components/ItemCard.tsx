@@ -31,17 +31,14 @@ export function ItemCard({ item, onAdjust, onToggleFavorite, onEdit, onDelete }:
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 relative overflow-hidden">
-      {/* colored left bar */}
       <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl" style={{ background: catColor }} />
 
       <div className="flex items-start gap-3">
-        {/* icon */}
         <div className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
           style={{ background: catColor + '18' }}>
           <CategoryIcon category={item.category} size={22} />
         </div>
 
-        {/* main content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 justify-between">
             <span className="font-semibold text-slate-800 text-sm truncate">{item.name}</span>
@@ -82,12 +79,10 @@ export function ItemCard({ item, onAdjust, onToggleFavorite, onEdit, onDelete }:
             </div>
           </div>
 
-          {/* status badge */}
           <div className="mt-0.5 mb-2">
             <StatusBadge status={status} />
           </div>
 
-          {/* progress bar */}
           <div className="h-1.5 bg-slate-100 rounded-full mb-2">
             <div
               className="h-full rounded-full transition-all duration-300"
@@ -98,7 +93,6 @@ export function ItemCard({ item, onAdjust, onToggleFavorite, onEdit, onDelete }:
             />
           </div>
 
-          {/* quantity controls */}
           <div className="flex items-center justify-between">
             <span className="text-xs text-slate-500">
               {formatQuantity(item.quantity, item.unit)}

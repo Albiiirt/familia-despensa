@@ -37,21 +37,21 @@ export default function App() {
               <Package size={18} color="white" strokeWidth={2} />
             </div>
             <div>
-              <h1 className="text-base font-bold text-slate-800 leading-tight">Despensa</h1>
-              <p className="text-[10px] text-slate-400 leading-none">{store.items.length} productos</p>
+              <h1 className="text-base font-bold text-slate-800 leading-tight">Rebost</h1>
+              <p className="text-[10px] text-slate-400 leading-none">{store.items.length} productes</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             {alertCount > 0 && (
-              <div className="flex items-center gap-1.5 bg-amber-50 text-amber-600 px-3 py-1.5 rounded-full border border-amber-200">
+              <div className="flex items-center gap-1.5 bg-amber-50 text-amber-600 px-2 py-1.5 rounded-full border border-amber-200">
                 <AlertCircle size={13} strokeWidth={2} />
-                <span className="text-xs font-semibold">{alertCount} escasean</span>
+                <span className="text-xs font-semibold">{alertCount} s'acaben</span>
               </div>
             )}
             <button
               onClick={lock}
               className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-600 transition"
-              title="Cerrar sesión"
+              title="Tancar sessió"
             >
               <LogOut size={17} strokeWidth={2} />
             </button>
@@ -91,7 +91,7 @@ export default function App() {
             }`}
           >
             <Package size={22} strokeWidth={tab === 'despensa' ? 2.2 : 1.8} />
-            <span className="text-[11px] font-semibold">Despensa</span>
+            <span className="text-[11px] font-semibold">Rebost</span>
           </button>
 
           <button

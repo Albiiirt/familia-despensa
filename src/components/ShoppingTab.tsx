@@ -35,13 +35,13 @@ function AddManualForm({ onAdd, onClose }: { onAdd: Props['onAddManual']; onClos
           <div className="w-10 h-1 bg-slate-200 rounded-full" />
         </div>
         <div className="flex items-center justify-between px-5 py-3">
-          <h2 className="font-bold text-slate-800 text-lg">Añadir a la compra</h2>
+          <h2 className="font-bold text-slate-800 text-lg">Afegir a la compra</h2>
           <button onClick={onClose} className="p-2 rounded-xl text-slate-400 hover:bg-slate-100 transition"><X size={20} /></button>
         </div>
         <form onSubmit={submit} className="px-5 pb-6 space-y-4">
           <input
             autoFocus type="text" value={name} onChange={e => setName(e.target.value)}
-            placeholder="¿Qué necesitas?" required
+            placeholder="Què necessites?" required
             className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 transition"
           />
           <div className="grid grid-cols-3 gap-2">
@@ -56,13 +56,13 @@ function AddManualForm({ onAdd, onClose }: { onAdd: Props['onAddManual']; onClos
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-slate-500 mb-1">Cantidad</label>
+              <label className="block text-xs text-slate-500 mb-1">Quantitat</label>
               <input type="number" min={0.01} step="any" value={qty} onChange={e => setQty(e.target.value)}
                 className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 transition"
               />
             </div>
             <div>
-              <label className="block text-xs text-slate-500 mb-1">Unidad</label>
+              <label className="block text-xs text-slate-500 mb-1">Unitat</label>
               <div className="relative">
                 <select value={unit} onChange={e => setUnit(e.target.value)}
                   className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 appearance-none bg-white transition"
@@ -74,7 +74,7 @@ function AddManualForm({ onAdd, onClose }: { onAdd: Props['onAddManual']; onClos
             </div>
           </div>
           <button type="submit" className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl py-3 text-sm transition">
-            Añadir
+            Afegir
           </button>
         </form>
       </div>
@@ -121,16 +121,16 @@ export function ShoppingTab({ shoppingList, onToggleCheck, onDelete, onAddManual
           <div className="flex items-center gap-2">
             <ShoppingCart size={18} className="text-emerald-500" />
             <span className="text-sm font-semibold text-slate-700">
-              {pending} pendiente{pending !== 1 ? 's' : ''}
+              {pending} pendent{pending !== 1 ? 's' : ''}
             </span>
-            {checked > 0 && <span className="text-xs text-slate-400">· {checked} listo{checked !== 1 ? 's' : ''}</span>}
+            {checked > 0 && <span className="text-xs text-slate-400">· {checked} llest{checked !== 1 ? 's' : ''}</span>}
           </div>
           {checked > 0 && (
             <button
               onClick={onClearChecked}
               className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-red-500 transition px-2 py-1 rounded-lg hover:bg-red-50"
             >
-              <Trash2 size={12} /> Limpiar
+              <Trash2 size={12} /> Netejar
             </button>
           )}
         </div>
@@ -138,15 +138,15 @@ export function ShoppingTab({ shoppingList, onToggleCheck, onDelete, onAddManual
 
       {/* search + filters */}
       <div className="px-4 pb-2 flex gap-2">
-        <div className="flex-1">
-          <SearchBar value={search} onChange={setSearch} placeholder="Buscar en la lista..." />
+        <div className="flex-1 min-w-0">
+          <SearchBar value={search} onChange={setSearch} placeholder="Cercar a la llista..." />
         </div>
         <button
           onClick={() => setShowOnlyPending(v => !v)}
           className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center border transition ${
             showOnlyPending ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-white border-slate-200 text-slate-500'
           }`}
-          title="Solo pendientes"
+          title="Només pendents"
         >
           <SlidersHorizontal size={17} />
         </button>
@@ -161,7 +161,7 @@ export function ShoppingTab({ shoppingList, onToggleCheck, onDelete, onAddManual
               !catFilter ? 'bg-slate-700 text-white border-slate-700' : 'border-slate-200 text-slate-500 bg-white'
             }`}
           >
-            Todas
+            Totes
           </button>
           {usedCats.map(cat => (
             <button
@@ -185,12 +185,12 @@ export function ShoppingTab({ shoppingList, onToggleCheck, onDelete, onAddManual
         {shoppingList.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-slate-400">
             <CheckSquare size={48} strokeWidth={1.5} className="mb-3 text-slate-300" />
-            <p className="text-sm font-medium">Lista de la compra vacía</p>
-            <p className="text-xs mt-1">Cuando algo escasee aparecerá aquí</p>
+            <p className="text-sm font-medium">Llista de la compra buida</p>
+            <p className="text-xs mt-1">Quan alguna cosa s'acabi apareixerà aquí</p>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-slate-400">
-            <p className="text-sm">No hay resultados</p>
+            <p className="text-sm">Cap resultat</p>
           </div>
         ) : (
           Object.entries(grouped).map(([cat, entries]) => {
@@ -228,7 +228,7 @@ export function ShoppingTab({ shoppingList, onToggleCheck, onDelete, onAddManual
                         )}
                       </button>
                       <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-medium text-slate-800 ${entry.is_checked ? 'line-through text-slate-400' : ''}`}>
+                        <p className={`text-sm font-medium text-slate-800 truncate ${entry.is_checked ? 'line-through text-slate-400' : ''}`}>
                           {entry.name}
                         </p>
                         {entry.quantity_needed > 0 && (

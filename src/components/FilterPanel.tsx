@@ -13,9 +13,9 @@ interface Props {
 
 const STATUSES: ItemStatus[] = ['ok', 'low', 'critical', 'empty'];
 const SORT_OPTIONS: { id: FilterState['sortBy']; label: string }[] = [
-  { id: 'name', label: 'Nombre A-Z' },
-  { id: 'status', label: 'Estado (peor primero)' },
-  { id: 'category', label: 'Categoría' },
+  { id: 'name',     label: 'Nom A-Z' },
+  { id: 'status',   label: 'Estat (pitjor primer)' },
+  { id: 'category', label: 'Categoria' },
 ];
 
 export function FilterPanel({ open, filters, onChange, onClose, resultCount }: Props) {
@@ -48,7 +48,7 @@ export function FilterPanel({ open, filters, onChange, onClose, resultCount }: P
         <div className="flex items-center justify-between px-5 py-3">
           <div className="flex items-center gap-2">
             <SlidersHorizontal size={18} className="text-slate-600" />
-            <span className="font-bold text-slate-800">Filtros y orden</span>
+            <span className="font-bold text-slate-800">Filtres i ordre</span>
             {activeCount > 0 && (
               <span className="bg-emerald-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">{activeCount}</span>
             )}
@@ -59,9 +59,9 @@ export function FilterPanel({ open, filters, onChange, onClose, resultCount }: P
         </div>
 
         <div className="px-5 pb-6 space-y-5 overflow-y-auto max-h-[70vh] hide-scrollbar">
-          {/* Status filter */}
+          {/* Estat */}
           <div>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Estado</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Estat</p>
             <div className="flex flex-wrap gap-2">
               {STATUSES.map(s => {
                 const cfg = STATUS_CONFIG[s];
@@ -81,9 +81,9 @@ export function FilterPanel({ open, filters, onChange, onClose, resultCount }: P
             </div>
           </div>
 
-          {/* Category filter */}
+          {/* Categoria */}
           <div>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Categoría</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Categoria</p>
             <div className="flex flex-wrap gap-2">
               {CATEGORIES.map(cat => {
                 const active = filters.categories.includes(cat.id);
@@ -102,7 +102,7 @@ export function FilterPanel({ open, filters, onChange, onClose, resultCount }: P
             </div>
           </div>
 
-          {/* Favorites */}
+          {/* Favorits */}
           <div>
             <button
               onClick={() => onChange({ ...filters, onlyFavorites: !filters.onlyFavorites })}
@@ -111,13 +111,13 @@ export function FilterPanel({ open, filters, onChange, onClose, resultCount }: P
               }`}
             >
               <Star size={14} fill={filters.onlyFavorites ? '#fbbf24' : 'none'} color={filters.onlyFavorites ? '#fbbf24' : '#94a3b8'} />
-              Solo favoritos
+              Només favorits
             </button>
           </div>
 
-          {/* Sort */}
+          {/* Ordenar */}
           <div>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Ordenar por</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Ordenar per</p>
             <div className="flex flex-col gap-2">
               {SORT_OPTIONS.map(opt => (
                 <button
@@ -141,14 +141,14 @@ export function FilterPanel({ open, filters, onChange, onClose, resultCount }: P
                 onClick={reset}
                 className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 transition"
               >
-                Limpiar filtros
+                Netejar filtres
               </button>
             )}
             <button
               onClick={onClose}
               className="flex-1 rounded-xl bg-emerald-500 hover:bg-emerald-600 py-2.5 text-sm font-semibold text-white transition"
             >
-              Ver {resultCount} resultado{resultCount !== 1 ? 's' : ''}
+              Veure {resultCount} resultat{resultCount !== 1 ? 's' : ''}
             </button>
           </div>
         </div>

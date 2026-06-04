@@ -45,7 +45,6 @@ export function InventoryTab({ items, onAdd, onUpdate, onDelete, onAdjust, onTog
 
   const activeFilters = filters.categories.length + filters.statuses.length + (filters.onlyFavorites ? 1 : 0);
 
-  // Group by category if sorting by category
   const grouped = useMemo(() => {
     if (filters.sortBy !== 'category') return null;
     const groups: Record<string, Item[]> = {};
@@ -60,8 +59,8 @@ export function InventoryTab({ items, onAdd, onUpdate, onDelete, onAdjust, onTog
     <div className="flex flex-col h-full">
       {/* search + filter bar */}
       <div className="px-4 pt-3 pb-2 flex gap-2">
-        <div className="flex-1">
-          <SearchBar value={search} onChange={setSearch} placeholder="Buscar producto..." />
+        <div className="flex-1 min-w-0">
+          <SearchBar value={search} onChange={setSearch} placeholder="Cercar producte..." />
         </div>
         <button
           onClick={() => setFilterOpen(true)}
@@ -80,7 +79,7 @@ export function InventoryTab({ items, onAdd, onUpdate, onDelete, onAdjust, onTog
         </button>
       </div>
 
-      {/* summary chips */}
+      {/* category chips */}
       <div className="px-4 pb-2 flex gap-2 overflow-x-auto hide-scrollbar">
         {CATEGORIES.map(cat => {
           const count = items.filter(i => i.category === cat.id).length;
@@ -111,8 +110,8 @@ export function InventoryTab({ items, onAdd, onUpdate, onDelete, onAdjust, onTog
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-slate-400">
             <PackageOpen size={48} strokeWidth={1.5} className="mb-3 text-slate-300" />
-            <p className="text-sm font-medium">{items.length === 0 ? 'Tu despensa está vacía' : 'No hay resultados'}</p>
-            <p className="text-xs mt-1">{items.length === 0 ? 'Pulsa + para añadir productos' : 'Prueba con otros filtros'}</p>
+            <p className="text-sm font-medium">{items.length === 0 ? 'El teu rebost és buit' : 'Cap resultat'}</p>
+            <p className="text-xs mt-1">{items.length === 0 ? 'Prem + per afegir productes' : 'Prova amb altres filtres'}</p>
           </div>
         ) : grouped ? (
           Object.entries(grouped).map(([cat, catItems]) => {
