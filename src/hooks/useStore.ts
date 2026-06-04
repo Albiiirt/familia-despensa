@@ -171,33 +171,28 @@ export function useStore() {
       const existing = db.find(e => e.id === id);
       const newChecked = !(existing?.is_checked ?? false);
       const entry: ShoppingEntry = {
-        id,
-        item_id: itemId,
-        name: srcItem.name,
-        category: srcItem.category,
-        unit: srcItem.unit,
-        quantity_needed: Math.max(0, srcItem.min_quantity - srcItem.quantity),
-        is_checked: newChecked,
-        is_manual: false,
+        id, item_id: itemId, name: srcItem.name, category: srcItem.category,
+        unit: srcItem.unit, quantity_needed: Math.max(0, srcItem.min_quantity - srcItem.quantity),
+        is_checked: newChecked, is_manual: false,
       };
-      if (isSupabaseConfigured && supabase) {
-        await supabase.from('shopping_list').upsert(entry);
-        return;
-      }
+      // Optimistic update always
       setDbShopping(prev =>
         existing
           ? prev.map(e => e.id === id ? { ...e, is_checked: newChecked } : e)
           : [...prev, entry]
       );
+      if (isSupabaseConfigured && supabase) {
+        supabase.from('shopping_list').upsert(entry).then();
+      }
     } else {
       const existing = db.find(e => e.id === id);
       if (!existing) return;
       const newChecked = !existing.is_checked;
-      if (isSupabaseConfigured && supabase) {
-        await supabase.from('shopping_list').update({ is_checked: newChecked }).eq('id', id);
-        return;
-      }
+      // Optimistic update always
       setDbShopping(prev => prev.map(e => e.id === id ? { ...e, is_checked: newChecked } : e));
+      if (isSupabaseConfigured && supabase) {
+        supabase.from('shopping_list').update({ is_checked: newChecked }).eq('id', id).then();
+      }
     }
   }, []);
 
@@ -210,14 +205,24 @@ export function useStore() {
   }, []);
 
   const clearCheckedShopping = useCallback(async () => {
-    const checkedIds = shoppingList.filter(e => e.is_checked).map(e => e.id);
-    if (!checkedIds.length) return;
-    if (isSupabaseConfigured && supabase) {
-      await supabase.from('shopping_list').delete().in('id', checkedIds);
-      return;
+    const checked = shoppingList.filter(e => e.is_checked);
+    if (!checked.length) return;
+
+    // Restock auto items: set quantity to min_quantity
+    for (const entry of checked) {
+      if (!entry.is_manual && entry.item_id) {
+        const item = itemsRef.current.find(i => i.id === entry.item_id);
+        if (item) updateItem(item.id, { quantity: item.min_quantity });
+      }
     }
-    setDbShopping(prev => prev.filter(e => !e.is_checked));
-  }, [shoppingList]);
+
+    // Remove from shopping list
+    const checkedIds = checked.map(e => e.id);
+    setDbShopping(prev => prev.filter(e => !checkedIds.includes(e.id)));
+    if (isSupabaseConfigured && supabase) {
+      supabase.from('shopping_list').delete().in('id', checkedIds).then();
+    }
+  }, [shoppingList, updateItem]);
 
   return {
     items,
