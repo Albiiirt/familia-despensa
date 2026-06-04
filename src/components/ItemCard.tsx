@@ -19,9 +19,8 @@ export function ItemCard({ item, onAdjust, onToggleFavorite, onToggleHidden, onE
   const [menuOpen, setMenuOpen] = useState(false);
   const status = getStatus(item);
   const catColor = CATEGORIES.find(c => c.id === item.category)?.color ?? '#94a3b8';
-  const progress = item.min_quantity > 0
-    ? Math.min(100, (item.quantity / item.min_quantity) * 100)
-    : 100;
+  const maxRef = Math.max(item.max_quantity ?? item.quantity, item.min_quantity, 0.001);
+  const progress = Math.min(100, (item.quantity / maxRef) * 100);
 
   const stepFor = (unit: string) => {
     if (unit === 'kg' || unit === 'L') return 0.1;

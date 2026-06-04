@@ -80,7 +80,9 @@ export function useStore() {
   }) => {
     const item: Item = {
       id: generateId(), created_at: now(), updated_at: now(),
-      is_favorite: false, is_hidden: false, ...data,
+      is_favorite: false, is_hidden: false,
+      max_quantity: data.quantity,
+      ...data,
     };
     if (isSupabaseConfigured && supabase) {
       const { data: row } = await supabase.from('items').insert(item).select().single();
@@ -123,7 +125,10 @@ export function useStore() {
     const item = itemsRef.current.find(i => i.id === id);
     if (!item) return;
     const qty = Math.max(0, Number((item.quantity + delta).toFixed(3)));
-    updateItem(id, { quantity: qty });
+    const currentMax = item.max_quantity ?? item.quantity;
+    const patch: Partial<Item> = { quantity: qty };
+    if (qty > currentMax) patch.max_quantity = qty;
+    updateItem(id, patch);
   }, [updateItem]);
 
   // ---------- Shopping list ----------

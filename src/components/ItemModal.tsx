@@ -8,7 +8,7 @@ interface Props {
   item?: Item | null;
   onSave: (data: {
     name: string; category: Category; unit: Unit;
-    quantity: number; min_quantity: number; notes?: string;
+    quantity: number; min_quantity: number; max_quantity: number; notes?: string;
   }) => void;
   onClose: () => void;
 }
@@ -37,12 +37,15 @@ export function ItemModal({ item, onSave, onClose }: Props) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim()) return;
+    const qty = Math.max(0, parseFloat(form.quantity) || 0);
+    const currentMax = item?.max_quantity ?? 0;
     onSave({
       name: form.name.trim(),
       category: form.category as Category,
       unit: form.unit as Unit,
-      quantity: Math.max(0, parseFloat(form.quantity) || 0),
+      quantity: qty,
       min_quantity: Math.max(0.01, parseFloat(form.min_quantity) || 1),
+      max_quantity: Math.max(qty, currentMax),
       notes: form.notes.trim() || undefined,
     });
     onClose();

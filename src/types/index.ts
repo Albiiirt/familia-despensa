@@ -28,6 +28,7 @@ export interface Item {
   notes?: string;
   is_favorite: boolean;
   is_hidden: boolean;
+  max_quantity: number;
 }
 
 export interface ShoppingEntry {
