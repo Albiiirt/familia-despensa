@@ -51,22 +51,27 @@ export function ItemModal({ item, onSave, onClose }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-lg bg-white rounded-t-3xl shadow-2xl z-10 overflow-hidden">
-        <div className="flex justify-center pt-3 pb-1">
+      <div className="relative w-full max-w-lg bg-white rounded-t-3xl shadow-2xl z-10 flex flex-col" style={{ maxHeight: '92svh' }}>
+
+        {/* Handle */}
+        <div className="flex-shrink-0 flex justify-center pt-3 pb-1">
           <div className="w-10 h-1 bg-slate-200 rounded-full" />
         </div>
 
-        <div className="flex items-center justify-between px-5 pb-3">
-          <h2 className="font-bold text-slate-800 text-lg">{item ? 'Editar producte' : 'Afegir producte'}</h2>
+        {/* Title */}
+        <div className="flex-shrink-0 flex items-center justify-between px-5 py-2">
+          <h2 className="font-bold text-slate-800 text-base">{item ? 'Editar producte' : 'Afegir producte'}</h2>
           <button onClick={onClose} className="p-2 rounded-xl text-slate-400 hover:bg-slate-100 transition">
             <X size={20} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="px-5 pb-6 space-y-4 overflow-y-auto max-h-[75vh] hide-scrollbar">
+        {/* Scrollable form */}
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto hide-scrollbar px-5 pb-4 space-y-3">
+
           {/* Nom */}
           <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Nom</label>
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Nom</label>
             <input
               autoFocus
               type="text"
@@ -80,22 +85,22 @@ export function ItemModal({ item, onSave, onClose }: Props) {
 
           {/* Categoria */}
           <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Categoria</label>
-            <div className="grid grid-cols-4 gap-1.5">
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Categoria</label>
+            <div className="grid grid-cols-4 gap-1">
               {CATEGORIES.map(cat => (
                 <button
                   key={cat.id}
                   type="button"
                   onClick={() => set('category', cat.id)}
-                  className={`flex flex-col items-center gap-1 py-2 rounded-xl border transition text-xs font-medium ${
-                    form.category === cat.id
-                      ? 'border-2 bg-slate-50'
-                      : 'border-slate-100 text-slate-500 hover:border-slate-300'
+                  className={`flex flex-col items-center gap-0.5 py-2 rounded-xl border transition ${
+                    form.category === cat.id ? 'border-2 bg-slate-50' : 'border-slate-100 hover:border-slate-200'
                   }`}
-                  style={form.category === cat.id ? { borderColor: cat.color, color: cat.color } : {}}
+                  style={form.category === cat.id ? { borderColor: cat.color, color: cat.color } : { color: '#94a3b8' }}
                 >
-                  <CategoryIcon category={cat.id} size={18} />
-                  <span className="leading-tight text-center w-full truncate px-0.5" style={{ fontSize: 9 }}>{cat.label}</span>
+                  <CategoryIcon category={cat.id} size={16} />
+                  <span className="w-full text-center truncate px-0.5 leading-tight" style={{ fontSize: 9, color: form.category === cat.id ? cat.color : '#94a3b8', fontWeight: 500 }}>
+                    {cat.label}
+                  </span>
                 </button>
               ))}
             </div>
@@ -103,7 +108,7 @@ export function ItemModal({ item, onSave, onClose }: Props) {
 
           {/* Unitat */}
           <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Unitat</label>
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Unitat</label>
             <div className="relative">
               <select
                 value={form.unit}
@@ -119,7 +124,7 @@ export function ItemModal({ item, onSave, onClose }: Props) {
           {/* Quantitat + Mínim */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Quantitat actual</label>
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Quantitat</label>
               <input
                 type="number" min={0} step="any" value={form.quantity}
                 onChange={e => set('quantity', e.target.value)}
@@ -127,7 +132,7 @@ export function ItemModal({ item, onSave, onClose }: Props) {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Mínim desitjat</label>
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Mínim</label>
               <input
                 type="number" min={0.01} step="any" value={form.min_quantity}
                 onChange={e => set('min_quantity', e.target.value)}
@@ -138,7 +143,7 @@ export function ItemModal({ item, onSave, onClose }: Props) {
 
           {/* Notes */}
           <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Notes (opcional)</label>
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Notes <span className="normal-case font-normal text-slate-400">(opcional)</span></label>
             <input
               type="text" value={form.notes}
               onChange={e => set('notes', e.target.value)}
@@ -147,12 +152,15 @@ export function ItemModal({ item, onSave, onClose }: Props) {
             />
           </div>
 
-          <button
-            type="submit"
-            className="w-full bg-emerald-500 hover:bg-emerald-600 active:scale-[0.98] text-white font-semibold rounded-xl py-3 text-sm transition shadow-sm"
-          >
-            {item ? 'Desar canvis' : 'Afegir producte'}
-          </button>
+          {/* Submit — inside scroll so it's always reachable */}
+          <div className="pb-2">
+            <button
+              type="submit"
+              className="w-full bg-emerald-500 hover:bg-emerald-600 active:scale-[0.98] text-white font-semibold rounded-xl py-3 text-sm transition shadow-sm"
+            >
+              {item ? 'Desar canvis' : 'Afegir producte'}
+            </button>
+          </div>
         </form>
       </div>
     </div>
