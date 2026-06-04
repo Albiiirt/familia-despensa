@@ -1,15 +1,15 @@
 import { useState, useMemo } from 'react';
-import { ShoppingCart, Package, AlertCircle, LogOut, Loader2 } from 'lucide-react';
+import { ShoppingCart, Package, AlertCircle, LogOut } from 'lucide-react';
 import type { TabId } from './types';
 import { useStore } from './hooks/useStore';
-import { useAuth } from './hooks/useAuth';
+import { usePasswordAuth } from './hooks/usePasswordAuth';
 import { InventoryTab } from './components/InventoryTab';
 import { ShoppingTab } from './components/ShoppingTab';
-import { LoginScreen } from './components/LoginScreen';
+import { PasswordGate } from './components/PasswordGate';
 import { needsShopping } from './lib/utils';
 
 export default function App() {
-  const { session, loading: authLoading, signIn, signUp, signOut } = useAuth();
+  const { unlocked, unlock, lock } = usePasswordAuth();
   const [tab, setTab] = useState<TabId>('despensa');
   const store = useStore();
 
@@ -23,16 +23,8 @@ export default function App() {
     [store.items]
   );
 
-  if (authLoading) {
-    return (
-      <div className="min-h-svh flex items-center justify-center bg-slate-50">
-        <Loader2 size={32} className="animate-spin text-emerald-500" />
-      </div>
-    );
-  }
-
-  if (!session) {
-    return <LoginScreen onSignIn={signIn} onSignUp={signUp} />;
+  if (!unlocked) {
+    return <PasswordGate onUnlock={unlock} />;
   }
 
   return (
@@ -57,7 +49,7 @@ export default function App() {
               </div>
             )}
             <button
-              onClick={signOut}
+              onClick={lock}
               className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-600 transition"
               title="Cerrar sesión"
             >
