@@ -32,7 +32,7 @@ export function ItemCard({ item, onAdjust, onToggleFavorite, onToggleHidden, onE
   const hidden = item.is_hidden ?? false;
 
   return (
-    <div className={`bg-white rounded-2xl shadow-sm border border-slate-100 p-4 relative overflow-hidden transition ${hidden ? 'opacity-50' : ''}`}>
+    <div className={`bg-white rounded-2xl shadow-sm border border-slate-100 p-4 relative transition ${hidden ? 'opacity-50' : ''}`}>
       <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl" style={{ background: catColor }} />
 
       <div className="flex items-start gap-3">
