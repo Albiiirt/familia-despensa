@@ -123,6 +123,9 @@ export function useStore() {
     ...manualShopping,
   ];
 
+  // checkedAuto declared BEFORE any callback that uses it
+  const [checkedAuto, setCheckedAuto] = useState<Set<string>>(new Set());
+
   const addManualShoppingItem = useCallback((data: {
     name: string; category: Category; unit: string; quantity_needed: number; notes?: string;
   }) => {
@@ -134,15 +137,12 @@ export function useStore() {
 
   const toggleShoppingCheck = useCallback((id: string) => {
     setManualShopping(prev => prev.map(e => e.id === id ? { ...e, is_checked: !e.is_checked } : e));
-    // Auto items: track checked state separately
     setCheckedAuto(prev => {
       const s = new Set(prev);
       s.has(id) ? s.delete(id) : s.add(id);
       return s;
     });
   }, []);
-
-  const [checkedAuto, setCheckedAuto] = useState<Set<string>>(new Set());
 
   const deleteShoppingItem = useCallback((id: string) => {
     setManualShopping(prev => prev.filter(e => e.id !== id));

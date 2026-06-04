@@ -116,24 +116,25 @@ export function ShoppingTab({ shoppingList, onToggleCheck, onDelete, onAddManual
   return (
     <div className="flex flex-col h-full">
       {/* header stats */}
-      <div className="px-4 pt-3 pb-2">
-        <div className="bg-white rounded-2xl p-3 border border-slate-100 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <ShoppingCart size={18} className="text-emerald-500" />
-            <span className="text-sm font-semibold text-slate-700">
-              {pending} pendent{pending !== 1 ? 's' : ''}
-            </span>
-            {checked > 0 && <span className="text-xs text-slate-400">· {checked} llest{checked !== 1 ? 's' : ''}</span>}
-          </div>
+      <div className="px-4 pt-3 pb-2 space-y-2">
+        <div className="bg-white rounded-2xl p-3 border border-slate-100 flex items-center gap-2">
+          <ShoppingCart size={18} className="text-emerald-500 flex-shrink-0" />
+          <span className="text-sm font-semibold text-slate-700">
+            {pending} pendent{pending !== 1 ? 's' : ''}
+          </span>
           {checked > 0 && (
-            <button
-              onClick={onClearChecked}
-              className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-red-500 transition px-2 py-1 rounded-lg hover:bg-red-50"
-            >
-              <Trash2 size={12} /> Netejar
-            </button>
+            <span className="text-xs text-slate-400">· {checked} marcat{checked !== 1 ? 's' : ''}</span>
           )}
         </div>
+        {checked > 0 && (
+          <button
+            onClick={onClearChecked}
+            className="w-full flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 active:bg-red-200 text-red-500 font-semibold rounded-2xl py-2.5 text-sm border border-red-100 transition"
+          >
+            <Trash2 size={15} />
+            Eliminar marcats ({checked})
+          </button>
+        )}
       </div>
 
       {/* search + filters */}
