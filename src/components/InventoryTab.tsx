@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Plus, SlidersHorizontal, PackageOpen } from 'lucide-react';
+import { Plus, SlidersHorizontal, PackageOpen, EyeOff, ChevronDown, ChevronUp } from 'lucide-react';
 import type { Item, FilterState, ItemStatus } from '../types';
 import { SearchBar } from './SearchBar';
 import { ItemCard } from './ItemCard';
@@ -15,20 +15,25 @@ interface Props {
   onDelete: (id: string) => void;
   onAdjust: (id: string, delta: number) => void;
   onToggleFavorite: (id: string) => void;
+  onToggleHidden: (id: string) => void;
 }
 
 const STATUS_ORDER: Record<ItemStatus, number> = { empty: 0, critical: 1, low: 2, ok: 3 };
 const DEFAULT_FILTERS: FilterState = { categories: [], statuses: [], sortBy: 'name', onlyFavorites: false };
 
-export function InventoryTab({ items, onAdd, onUpdate, onDelete, onAdjust, onToggleFavorite }: Props) {
+export function InventoryTab({ items, onAdd, onUpdate, onDelete, onAdjust, onToggleFavorite, onToggleHidden }: Props) {
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
   const [filterOpen, setFilterOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [editItem, setEditItem] = useState<Item | null>(null);
+  const [showHidden, setShowHidden] = useState(false);
+
+  const visibleItems = useMemo(() => items.filter(i => !(i.is_hidden ?? false)), [items]);
+  const hiddenItems  = useMemo(() => items.filter(i => i.is_hidden ?? false),  [items]);
 
   const filtered = useMemo(() => {
-    let list = items;
+    let list = visibleItems;
     if (search) {
       const q = search.toLowerCase();
       list = list.filter(i => i.name.toLowerCase().includes(q) || i.category.toLowerCase().includes(q));
@@ -41,7 +46,7 @@ export function InventoryTab({ items, onAdd, onUpdate, onDelete, onAdjust, onTog
       if (filters.sortBy === 'category') return a.category.localeCompare(b.category) || a.name.localeCompare(b.name);
       return a.name.localeCompare(b.name);
     });
-  }, [items, search, filters]);
+  }, [visibleItems, search, filters]);
 
   const activeFilters = filters.categories.length + filters.statuses.length + (filters.onlyFavorites ? 1 : 0);
 
@@ -54,6 +59,17 @@ export function InventoryTab({ items, onAdd, onUpdate, onDelete, onAdjust, onTog
     }
     return groups;
   }, [filtered, filters.sortBy]);
+
+  const renderCard = (item: Item) => (
+    <ItemCard
+      key={item.id} item={item}
+      onAdjust={onAdjust}
+      onToggleFavorite={onToggleFavorite}
+      onToggleHidden={onToggleHidden}
+      onEdit={i => { setEditItem(i); setModalOpen(true); }}
+      onDelete={onDelete}
+    />
+  );
 
   return (
     <div className="flex flex-col h-full">
@@ -82,7 +98,7 @@ export function InventoryTab({ items, onAdd, onUpdate, onDelete, onAdjust, onTog
       {/* category chips */}
       <div className="px-4 pb-2 flex gap-2 overflow-x-auto hide-scrollbar">
         {CATEGORIES.map(cat => {
-          const count = items.filter(i => i.category === cat.id).length;
+          const count = visibleItems.filter(i => i.category === cat.id).length;
           if (!count) return null;
           return (
             <button
@@ -107,48 +123,63 @@ export function InventoryTab({ items, onAdd, onUpdate, onDelete, onAdjust, onTog
 
       {/* list */}
       <div className="flex-1 overflow-y-auto hide-scrollbar px-4 pb-24">
-        {filtered.length === 0 ? (
+        {filtered.length === 0 && hiddenItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-slate-400">
             <PackageOpen size={48} strokeWidth={1.5} className="mb-3 text-slate-300" />
-            <p className="text-sm font-medium">{items.length === 0 ? 'El teu rebost és buit' : 'Cap resultat'}</p>
-            <p className="text-xs mt-1">{items.length === 0 ? 'Prem + per afegir productes' : 'Prova amb altres filtres'}</p>
+            <p className="text-sm font-medium">{visibleItems.length === 0 ? 'El teu rebost és buit' : 'Cap resultat'}</p>
+            <p className="text-xs mt-1">{visibleItems.length === 0 ? 'Prem + per afegir productes' : 'Prova amb altres filtres'}</p>
           </div>
-        ) : grouped ? (
-          Object.entries(grouped).map(([cat, catItems]) => {
-            const catInfo = CATEGORIES.find(c => c.id === cat);
-            return (
-              <div key={cat} className="mb-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="h-px flex-1" style={{ background: (catInfo?.color ?? '#94a3b8') + '40' }} />
-                  <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: catInfo?.color ?? '#94a3b8' }}>
-                    {catInfo?.label}
-                  </span>
-                  <div className="h-px flex-1" style={{ background: (catInfo?.color ?? '#94a3b8') + '40' }} />
-                </div>
-                <div className="space-y-2.5">
-                  {catItems.map(item => (
-                    <ItemCard
-                      key={item.id} item={item}
-                      onAdjust={onAdjust} onToggleFavorite={onToggleFavorite}
-                      onEdit={i => { setEditItem(i); setModalOpen(true); }}
-                      onDelete={onDelete}
-                    />
-                  ))}
-                </div>
-              </div>
-            );
-          })
         ) : (
-          <div className="space-y-2.5 pt-1">
-            {filtered.map(item => (
-              <ItemCard
-                key={item.id} item={item}
-                onAdjust={onAdjust} onToggleFavorite={onToggleFavorite}
-                onEdit={i => { setEditItem(i); setModalOpen(true); }}
-                onDelete={onDelete}
-              />
-            ))}
-          </div>
+          <>
+            {filtered.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-10 text-slate-400">
+                <p className="text-sm">Cap resultat</p>
+                <p className="text-xs mt-1">Prova amb altres filtres</p>
+              </div>
+            ) : grouped ? (
+              Object.entries(grouped).map(([cat, catItems]) => {
+                const catInfo = CATEGORIES.find(c => c.id === cat);
+                return (
+                  <div key={cat} className="mb-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="h-px flex-1" style={{ background: (catInfo?.color ?? '#94a3b8') + '40' }} />
+                      <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: catInfo?.color ?? '#94a3b8' }}>
+                        {catInfo?.label}
+                      </span>
+                      <div className="h-px flex-1" style={{ background: (catInfo?.color ?? '#94a3b8') + '40' }} />
+                    </div>
+                    <div className="space-y-2.5">{catItems.map(renderCard)}</div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="space-y-2.5 pt-1">{filtered.map(renderCard)}</div>
+            )}
+
+            {/* Hidden items section */}
+            {hiddenItems.length > 0 && (
+              <div className="mt-4 mb-2">
+                <button
+                  onClick={() => setShowHidden(v => !v)}
+                  className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl border border-dashed border-slate-200 text-slate-400 hover:border-slate-300 hover:text-slate-500 transition"
+                >
+                  <EyeOff size={14} />
+                  <span className="text-xs font-medium flex-1 text-left">
+                    {hiddenItems.length} producte{hiddenItems.length !== 1 ? 's' : ''} ocult{hiddenItems.length !== 1 ? 's' : ''}
+                  </span>
+                  {showHidden ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                </button>
+
+                {showHidden && (
+                  <div className="space-y-2 mt-2">
+                    {hiddenItems
+                      .sort((a, b) => a.name.localeCompare(b.name))
+                      .map(renderCard)}
+                  </div>
+                )}
+              </div>
+            )}
+          </>
         )}
       </div>
 

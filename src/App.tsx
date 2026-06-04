@@ -69,6 +69,7 @@ export default function App() {
             onDelete={store.deleteItem}
             onAdjust={store.adjustQuantity}
             onToggleFavorite={store.toggleFavorite}
+            onToggleHidden={store.toggleHidden}
           />
         ) : (
           <ShoppingTab

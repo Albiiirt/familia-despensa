@@ -58,7 +58,7 @@ export function useStore() {
   }) => {
     const item: Item = {
       id: generateId(), created_at: now(), updated_at: now(),
-      is_favorite: false, ...data,
+      is_favorite: false, is_hidden: false, ...data,
     };
     if (isSupabaseConfigured && supabase) {
       const { data: row } = await supabase.from('items').insert(item).select().single();
@@ -87,6 +87,12 @@ export function useStore() {
     const item = items.find(i => i.id === id);
     if (!item) return;
     updateItem(id, { is_favorite: !item.is_favorite });
+  }, [items, updateItem]);
+
+  const toggleHidden = useCallback((id: string) => {
+    const item = items.find(i => i.id === id);
+    if (!item) return;
+    updateItem(id, { is_hidden: !item.is_hidden });
   }, [items, updateItem]);
 
   const adjustQuantity = useCallback((id: string, delta: number) => {
@@ -159,6 +165,7 @@ export function useStore() {
     updateItem,
     deleteItem,
     toggleFavorite,
+    toggleHidden,
     adjustQuantity,
     shoppingList: shoppingListWithChecked,
     addManualShoppingItem,

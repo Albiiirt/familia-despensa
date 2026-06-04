@@ -27,6 +27,7 @@ export interface Item {
   min_quantity: number;
   notes?: string;
   is_favorite: boolean;
+  is_hidden: boolean;
 }
 
 export interface ShoppingEntry {
